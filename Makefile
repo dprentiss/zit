@@ -5,8 +5,14 @@ TARGET = zit
 
 all: build
 
-build: 
+build:  clean mkdir
 	$(NVCC) $(SRC_DIR)/*.cu -o $(BIN_DIR)/$(TARGET)
 
 clean: 
-	rm -r $(BIN_DIR)
+	$(RM) -r $(BIN_DIR)
+
+mkdir: 
+	mkdir -p $(BIN_DIR)
+
+run:
+	./$(BIN_DIR)/$(TARGET)
