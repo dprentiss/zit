@@ -110,16 +110,20 @@ void InitializeAgents()
  	};
 }	//	InitializeAgents()
 
+//void *DoTrades (void *threadN)
 __global__
-void doTrades() {
+void doTrades(Agent *Buyers, Agent *Sellers) {
 //
 //	This function pairs agents at random and then selects a price randomly...
 //
 
-  /*
-	int i, buyerIndex, sellerIndex;
+  curandState_t state;
+  curand_init(0, 0, 0, &state);
+
+  int i, buyerIndex, sellerIndex;
 	int bidPrice, askPrice, transactionPrice;
-	int threadNum = *(int*) threadN;
+	//int threadNum = *(int*) threadN;
+	int threadNum = threadIdx.x;
 
 	int lowerBuyerBound, upperBuyerBound, lowerSellerBound, upperSellerBound;
 
@@ -136,27 +140,31 @@ void doTrades() {
     //  then pick a 'bid' price randomly between 1 and the agent's private value;
     //
     do {
-      buyerIndex = lowerBuyerBound + rand_r(&seeds[threadNum]) % (upperBuyerBound - lowerBuyerBound);
+      //buyerIndex = lowerBuyerBound + rand_r(&seeds[threadNum]) % (upperBuyerBound - lowerBuyerBound);
+      buyerIndex = lowerBuyerBound + curand(&state) % (upperBuyerBound - lowerBuyerBound);
     }
     while (Buyers[buyerIndex].quantityHeld == 1);
-	 	bidPrice = (rand_r(&seeds[threadNum]) % Buyers[buyerIndex].value) + 1;
+	 	//bidPrice = (rand_r(&seeds[threadNum]) % Buyers[buyerIndex].value) + 1;
+	 	bidPrice = (curand(&state) % Buyers[buyerIndex].value) + 1;
 
-	 	//	Pick a seller at random who has not already sold a unit,
     //  then pick an 'ask' price randomly between the agent's private value and maxSellerValue;
     //
     do {
-      sellerIndex = lowerSellerBound + rand_r(&seeds[threadNum]) % (upperSellerBound - lowerSellerBound);
+      //sellerIndex = lowerSellerBound + rand_r(&seeds[threadNum]) % (upperSellerBound - lowerSellerBound);
+      sellerIndex = lowerSellerBound + curand(&state) % (upperSellerBound - lowerSellerBound);
     }
     while (Sellers[sellerIndex].quantityHeld != 1);
-	 	askPrice = Sellers[sellerIndex].value + (rand_r(&seeds[threadNum]) % (maxSellerValue - Sellers[sellerIndex].value + 1));
+	 	//@askPrice = Sellers[sellerIndex].value + (rand_r(&seeds[threadNum]) % (maxSellerValue - Sellers[sellerIndex].value + 1));
+	 	askPrice = Sellers[sellerIndex].value + (curand(&state) % (maxSellerValue - Sellers[sellerIndex].value + 1));
 
+	 	//	Pick a seller at random who has not already sold a unit,
 	 	//	Let's see if a deal can be made...
 	 	//
 	 	if (bidPrice >= askPrice)
 	 	{
 	 		//	First, compute the transaction price...
       //
-	 		transactionPrice = askPrice + rand_r(&seeds[threadNum]) % (bidPrice - askPrice + 1);
+	 		transactionPrice = askPrice + curand(&state) % (bidPrice - askPrice + 1);
 	 		Buyers[buyerIndex].price = transactionPrice;
 	 		Sellers[sellerIndex].price = transactionPrice;
 	 		//
@@ -165,9 +173,9 @@ void doTrades() {
 	 		Buyers[buyerIndex].quantityHeld = 1;
 	 		Sellers[sellerIndex].quantityHeld = 0;
 	 	};
+    //return 0;
 	};
-  */
-}
+} // DoTrades()
 
 void ComputeStatistics(clock_t elapsedTime)
 //
@@ -224,10 +232,12 @@ void OpenMarket()
 	clock_t startTime1, endTime1;
 	time_t startTime2, endTime2;
 
+  /*
 	int threadNumber, status;
 	pthread_t threads[numThreads];
 	int args[numThreads];
 	void *threadResult[numThreads];
+  */
 
 	startTime1 = clock();
 	time(&startTime2);
@@ -251,6 +261,8 @@ void OpenMarket()
 		if (threadResult[threadNumber] != 0)
 			printf("Problem with termination of thread %i\n", threadNumber);
   */
+  doTrades<<<1, numThreads>>>(Buyers, Sellers);
+  cudaDeviceSynchronize();
 
 	endTime1 = clock();
 	time(&endTime2);
