@@ -1,24 +1,20 @@
-CC = cc
+SHELL = /bin/sh
+
+CC = gcc
 NVCC = nvcc
-SRC_DIR = src
-BIN_DIR = bin
-TARGET = zit
+SRC = src
+BIN = bin
 
-all: clean build
+.PHONY: all
+all: pthreads pthreadclone
 
-build: 
-	$(NVCC) $(SRC_DIR)/*.cu -o $(BIN_DIR)/$(TARGET)
+.PHONY: pthreads
+pthreads:
+	mkdir -p $(BIN)/rax
+	$(CC) $(SRC)/rax/zitpthreads.c -o $(BIN)/rax/zitp -lm -lpthread
 
-clean: 
-	$(RM) -r $(BIN_DIR)/*
-
-mkdir: 
-	mkdir -p $(BIN_DIR)
-
-pthreads: 
-	mkdir -p $(BIN_DIR)
-	mkdir -p $(BIN_DIR)/rax
-	$(CC) $(SRC_DIR)/rax/zitpthreads.c -o $(BIN_DIR)/rax/zitp -lm -lpthread
-
-run:
-	./$(BIN_DIR)/$(TARGET)
+.PHONY: pthreadclone
+pthreadclone:
+	$(RM) $(BIN)/$@
+	mkdir -p $(BIN)
+	$(NVCC) $(SRC)/cuda/pthreadclone/pthreadclone.cu -o $(BIN)/$@
