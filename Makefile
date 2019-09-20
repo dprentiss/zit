@@ -1,3 +1,4 @@
+CC = cc
 NVCC = nvcc
 SRC_DIR = src
 BIN_DIR = bin
