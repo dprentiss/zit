@@ -18,3 +18,9 @@ pthreadclone:
 	$(RM) $(BIN)/$@
 	mkdir -p $(BIN)
 	$(NVCC) $(SRC)/cuda/pthreadclone/pthreadclone.cu -o $(BIN)/$@
+
+.PHONY: zitcuda
+zitcuda:
+	$(RM) $(BIN)/$@
+	mkdir -p $(BIN)
+	$(NVCC) $(SRC)/cuda/zit.cu -o $(BIN)/$@

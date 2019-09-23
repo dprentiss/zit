@@ -49,10 +49,8 @@ typedef struct
 } Agent;
 
 //	Declare the agent populations...
-/*
-Agent Buyers[numberOfBuyers];
-Agent Sellers[numberOfSellers];
-*/
+//Agent Buyers[numberOfBuyers];
+//Agent Sellers[numberOfSellers];
 Agent *Buyers;
 Agent *Sellers;
 
