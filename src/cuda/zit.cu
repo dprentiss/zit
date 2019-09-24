@@ -6,15 +6,83 @@ static const uint NUM_BUYERS = 1 << 10;
 static const uint MAX_BUYER_VALUE = 20;
 static const uint MAX_SELLER_VALUE = MAX_BUYER_VALUE;
 
-//static const int MAX_TRANSACTIONS = 1E5;
+// static const int MAX_TRANSACTIONS = 1E5;
+
+/*
+ * Replaces the the values in the input array with a prefix sum.
+ * Adapted from work by Mark Harris, NVIDIA and Stewart Weiss, CUNY.
+ */
+
+__device__
+int scan(unsigned int *a)
+{
+    unsigned int idx = threadIdx.x;
+    unsigned int n = blockDim.x;
+    unsigned int d;
+
+    for (d = 1; d < n; d *= 2) {
+        int tmp;
+
+        if (idx >= d)
+            tmp = a[idx-d];
+
+        __syncthreads();
+
+        if (idx >= d)
+            a[idx] = tmp + a[idx];
+
+        __syncthreads();
+    }
+
+    return a[idx];
+}
+
+__device__
+void split(unsigned int *a, unsigned int bit)
+{
+    unsigned int idx = threadIdx.x;
+    unsigned int N = blockDim.x;
+    unsigned int a_idx = a[idx];
+    unsigned int b_idx = (a_idx >> bit) & 1;
+
+    a[idx] = b_idx;
+
+    __syncthreads();
+
+    unsigned int T_before = scan(a);
+    unsigned int T_total = a[N-1];
+    unsigned int F_total = N - T_total;
+
+    __syncthreads();
+
+    if (b_idx) {
+      a[T_before-1+F_total] = a_idx;
+    } else {
+      a[idx-T_before] = a_idx;
+    }
+}
+
+__device__
+void sort(unsigned int *a)
+{
+  unsigned int bit;
+  size_t n = CHAR_BIT * sizeof(a[0]);
+
+  for (bit = 0; bit < n; ++bit) {
+    split(a, bit);
+    __syncthreads();
+  }
+}
 
 // declare pointers to int arrays
-int *buyerValues;
-int *sellerValues;
-int *transactionPrice;
+unsigned int *buyerValues;
+unsigned int *sellerValues;
+unsigned int *transactionPrice;
 
 __global__
-void trade(int *buyerValues, int *sellerValues, int *transactionPrice)
+void trade(unsigned int *buyerValues,
+           unsigned int *sellerValues,
+           unsigned int *transactionPrice)
 {
     curandState_t state;
     curand_init(0, 0, 0, &state);
@@ -32,6 +100,8 @@ void trade(int *buyerValues, int *sellerValues, int *transactionPrice)
     }
 
     __syncthreads();
+
+    sort(sellerValues);
 }
 
 int main()
@@ -57,7 +127,6 @@ int main()
         // zero indicates no trade has taken place between buyer and seller i
         transactionPrice[i] = 0;
     }
-
 
     trade<<<1, NUM_BUYERS>>>(buyerValues, sellerValues, transactionPrice);
 
