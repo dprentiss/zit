@@ -6,7 +6,7 @@ SRC = src
 BIN = bin
 
 .PHONY: all
-all: pthreads pthreadclone
+all: pthreads pthreadclone zitcuda
 
 .PHONY: pthreads
 pthreads:
