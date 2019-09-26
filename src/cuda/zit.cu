@@ -103,8 +103,8 @@ void init(unsigned int *buyerValues,
     transactionPrice[idx] = 0;
 }
 
-    __global__
-    //__device__
+__global__
+//__device__
 void shuffle(unsigned int *buyerValues,
         unsigned int *sellerValues,
         unsigned int *transactionPrice,
@@ -186,8 +186,16 @@ void trade(unsigned int *buyerValues,
     }
 
     __syncthreads();
-        
+
     //shuffle(buyerValues, sellerValues, transactionPrice, states);
+}
+
+__global__
+void stats(unsigned int *transactionPrice, unsigned int numTrades, unsigned int price) {
+    int idx = threadIdx.x;
+    unsigned int traded = 1;
+
+    if (transactionPrice == 0) traded = 0;
 }
 
 int main()
@@ -229,8 +237,10 @@ int main()
     }
 
     cudaDeviceSynchronize();
-    /*
 
+    
+
+    /*
        for (int i = 0; i < NUM_BUYERS; i++) {
        printf("%3u", buyerValues[i]);
        }
@@ -239,11 +249,11 @@ int main()
        printf("%3u", sellerValues[i]);
        }
        printf("\n");
+       for (int i = 0; i < NUM_BUYERS; i++) {
+       printf("%3u", transactionPrice[i]);
+       }
+       printf("\n");
      */
-    for (int i = 0; i < NUM_BUYERS; i++) {
-        printf("%3u", transactionPrice[i]);
-    }
-    printf("\n");
 
     // free memory
     cudaFree(buyerValues);
