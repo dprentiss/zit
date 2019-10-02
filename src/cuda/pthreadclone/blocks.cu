@@ -277,7 +277,7 @@ void OpenMarket()
 
 }
 
-int main() {
+int main(int argc, char **argv) {
     printf("\nZERO INTELLIGENCE TRADERS\n");
     //  printf("%d",sizeof(Agent));
 
