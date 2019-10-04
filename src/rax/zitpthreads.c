@@ -1,24 +1,24 @@
 /*
 	Zero Intelligence Traders
-	
+
 	C (no objects) Version
-	
+
 	Robert Axtell
-	
+
 	The Brookings Institution
 		and
 	George Mason University
-	
+
 	First version: October 1998
 	Updated version: September 2004
   New version: July 2009
   Updated for XCode 7 and OS 10.11: Fall 2015
   Thread-safe random numbers: Fall 2017
-	
+
 	Reference: Gode and Sunder, QJE, 1993
 
  */
- 
+
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -36,7 +36,7 @@
 
 #define seedRandomWithTime false	//	if false, seed the generator with 'seed'
 #define seed 1
- 
+
 #define buyer true
 #define seller false
 
@@ -48,9 +48,9 @@
 #define numberOfBuyers 1000000
 #define numberOfSellers 1000000
 
-#define MaxNumberOfTrades 200000000
+#define MaxNumberOfTrades 100000000
 
-#define numThreads 64
+#define numThreads 1000
 
 //	Define an agent...
 typedef struct
@@ -93,9 +93,9 @@ void InitializeAgents()
 //
 //	Fill the agent fields...
 //
-{	
+{
 	int i;
- 	
+
  	//	First the buyers...
  	for (i=0; i<numberOfBuyers; i=i+1)
  	{
@@ -121,17 +121,17 @@ void *DoTrades (void *threadN)
 	int i, buyerIndex, sellerIndex;
 	int bidPrice, askPrice, transactionPrice;
 	int threadNum = *(int*) threadN;
-	
+
 	int lowerBuyerBound, upperBuyerBound, lowerSellerBound, upperSellerBound;
-	
+
 	if (numThreads <= 10)
     printf("Thread %i up and running\n", threadNum);
-				 
+
 	lowerBuyerBound = threadNum * agentsPerThread;
 	upperBuyerBound = (threadNum + 1) * agentsPerThread - 1;
 	lowerSellerBound = threadNum * agentsPerThread;
-	upperSellerBound = (threadNum + 1) * agentsPerThread - 1;	
-	
+	upperSellerBound = (threadNum + 1) * agentsPerThread - 1;
+
 	for (i=1; i<=tradesPerThread; i++)
 	{
 	 	//	Pick a buyer at random who has not already bought a unit,
@@ -142,7 +142,7 @@ void *DoTrades (void *threadN)
     }
     while (Buyers[buyerIndex].quantityHeld == 1);
 	 	bidPrice = (rand_r(&seeds[threadNum]) % Buyers[buyerIndex].value) + 1;
-	 	
+
 	 	//	Pick a seller at random who has not already sold a unit,
     //  then pick an 'ask' price randomly between the agent's private value and maxSellerValue;
     //
@@ -151,7 +151,7 @@ void *DoTrades (void *threadN)
     }
     while (Sellers[sellerIndex].quantityHeld != 1);
 	 	askPrice = Sellers[sellerIndex].value + (rand_r(&seeds[threadNum]) % (maxSellerValue - Sellers[sellerIndex].value + 1));
-	 	
+
 	 	//	Let's see if a deal can be made...
 	 	//
 	 	if (bidPrice >= askPrice)
@@ -168,11 +168,11 @@ void *DoTrades (void *threadN)
 	 		Sellers[sellerIndex].quantityHeld = 0;
 	 	};
 	};
-	
+
 	return 0;
-	
+
 }	//	DoTrades()
- 
+
 void ComputeStatistics(clock_t elapsedTime)
 //
 //	Determine the total quantities bought and sold...
@@ -186,7 +186,7 @@ void ComputeStatistics(clock_t elapsedTime)
 	double sum2 = 0.0;
 	int N = 0;
 	double avgPrice, sd;
-	
+
 	//	First, compute the quantity purchased...
   //
 	for (i=0; i<numberOfBuyers; i++)
@@ -198,7 +198,7 @@ void ComputeStatistics(clock_t elapsedTime)
 	for (i=0; i<numberOfSellers; i++)
 		if (Sellers[i].quantityHeld == 0)
 			numberSold++;
-	
+
 	//	Now let's compute the average price paid as well as the standard deviation...
   //
 	for (i=0; i<numberOfBuyers; i++)
@@ -225,16 +225,17 @@ void ComputeStatistics(clock_t elapsedTime)
 void OpenMarket()
 {
 	clock_t startTime1, endTime1;
-	time_t startTime2, endTime2;
-	
+	struct timespec startTime2, endTime2;
+
 	int threadNumber, status;
 	pthread_t threads[numThreads];
 	int args[numThreads];
 	void *threadResult[numThreads];
-		
+
 	startTime1 = clock();
-	time(&startTime2);
-	
+	//time(&startTime2);
+  clock_gettime(CLOCK_MONOTONIC_RAW, &startTime2);
+
 	for (threadNumber = 0; threadNumber < numThreads; threadNumber++)
 	{
 		args[threadNumber] = threadNumber;
@@ -242,24 +243,26 @@ void OpenMarket()
 		if (status != 0)
 			printf("Problem launching thread %i", threadNumber);
 	};
-	
+
 	for (threadNumber = 0; threadNumber < numThreads; threadNumber++) {
 		status = pthread_join(threads[threadNumber], &threadResult[threadNumber]);
 		if (status != 0)
 			printf("Problem joining thread %i",threadNumber);
 	};
-	
+
 	for (threadNumber = 0; threadNumber < numThreads; threadNumber++)
 		if (threadResult[threadNumber] != 0)
 			printf("Problem with termination of thread %i\n", threadNumber);
-	
+
 	endTime1 = clock();
-	time(&endTime2);
-	
+	//time(&endTime2);
+  clock_gettime(CLOCK_MONOTONIC_RAW, &endTime2);
+
 	ComputeStatistics(endTime1 - startTime1);
-	endTime2 = (endTime2 - startTime2);
-	printf("Wall time: %d seconds\n", (int) endTime2);
-	
+	//endTime2 = (endTime2.tv_sec - startTime2.tv_sec);
+	printf("Wall time: %f seconds\n", (endTime2.tv_sec - startTime2.tv_sec) +
+         (endTime2.tv_nsec - startTime2.tv_nsec) / 1000000000.0);
+
 }
 
 ///////////
@@ -267,7 +270,7 @@ void OpenMarket()
 //	MAIN...
 //
 ///////////
- 
+
 int main()
 {
   printf("\nZERO INTELLIGENCE TRADERS\n");
@@ -275,8 +278,8 @@ int main()
 
   InitializeMiscellaneous();
   InitializeAgents();
-	
+
 	OpenMarket();
-	
+
 	return(0);
 }
