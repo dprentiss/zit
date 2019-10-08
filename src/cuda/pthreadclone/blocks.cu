@@ -35,7 +35,7 @@
 #define numberOfBuyers 1000000
 #define numberOfSellers 1000000
 
-#define MaxNumberOfTrades 1000000000
+#define MaxNumberOfTrades 100000000
 
 //	Define an agent...
 typedef struct
@@ -53,8 +53,8 @@ Agent *Buyers;
 Agent *Sellers;
 
 
-const unsigned int numThreads = 1<<11;
-const unsigned int threadsPerBlock = 1<<10;
+const unsigned int numThreads = 1<<3;
+const unsigned int threadsPerBlock = 1<<3;
 const int agentsPerThread = numberOfBuyers/numThreads;
 const int tradesPerThread = MaxNumberOfTrades/numThreads;
 const int numBlocks = numThreads / threadsPerBlock;
@@ -228,7 +228,7 @@ void ComputeStatistics(clock_t elapsedTime)
     printf("%i items bought and %i items sold\n", numberBought, numberSold);
     printf("The average price = %f and the s.d. is %f\n", avgPrice, sd);
   */
-  printf("The total time on CPUs was %f seconds\n", (double) elapsedTime/CLOCKS_PER_SEC);
+  //printf("The total time on CPUs was %f seconds\n", (double) elapsedTime/CLOCKS_PER_SEC);
   printf("%i, %i, %i, %u, %u, %u, %i, %i, %f, %f, ",
          numberOfBuyers, numberOfSellers, MaxNumberOfTrades, numThreads, numBlocks, threadsPerBlock, numberBought, numberSold, avgPrice, sd);
 }	//	ComputeStatistics()
@@ -286,6 +286,9 @@ void OpenMarket()
 	printf("%f\n", (endTime2.tv_sec - startTime2.tv_sec) +
          (endTime2.tv_nsec - startTime2.tv_nsec) / 1000000000.0);
 
+  cudaFree(Buyers);
+  cudaFree(Sellers);
+
 }
 
 int main(int argc, char **argv) {
@@ -293,10 +296,10 @@ int main(int argc, char **argv) {
   //  printf("%d",sizeof(Agent));
 
   InitializeMiscellaneous();
-  InitializeAgents();
-
-
-  OpenMarket();
+  for (int i = 0; i<10; i++) {
+      InitializeAgents();
+      OpenMarket();
+  }
 
   return(0);
 }

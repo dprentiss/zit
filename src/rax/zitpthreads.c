@@ -50,7 +50,7 @@
 
 #define MaxNumberOfTrades 100000000
 
-#define numThreads 1000
+#define numThreads 256
 
 //	Define an agent...
 typedef struct
@@ -125,7 +125,7 @@ void *DoTrades (void *threadN)
 	int lowerBuyerBound, upperBuyerBound, lowerSellerBound, upperSellerBound;
 
 	if (numThreads <= 10)
-    printf("Thread %i up and running\n", threadNum);
+    //printf("Thread %i up and running\n", threadNum);
 
 	lowerBuyerBound = threadNum * agentsPerThread;
 	upperBuyerBound = (threadNum + 1) * agentsPerThread - 1;
@@ -217,9 +217,14 @@ void ComputeStatistics(clock_t elapsedTime)
 		};
 	avgPrice = (double) sum / (double) N;
 	sd = sqrt((sum2 - (double) N * pow(avgPrice, 2)) / (double) (N - 1));
+  /*
 	printf("%i items bought and %i items sold\n", numberBought, numberSold);
 	printf("The average price = %f and the s.d. is %f\n", avgPrice, sd);
 	printf("The total time on CPUs was %f seconds\n", (double) elapsedTime/CLOCKS_PER_SEC);
+  */
+  //printf("The total time on CPUs was %f seconds\n", (double) elapsedTime/CLOCKS_PER_SEC);
+  printf("%i, %i, %i, %u, %u, %u, %i, %i, %f, %f, ",
+         numberOfBuyers, numberOfSellers, MaxNumberOfTrades, numThreads, 1, numThreads, numberBought, numberSold, avgPrice, sd);
 }	//	ComputeStatistics()
 
 void OpenMarket()
@@ -260,7 +265,11 @@ void OpenMarket()
 
 	ComputeStatistics(endTime1 - startTime1);
 	//endTime2 = (endTime2.tv_sec - startTime2.tv_sec);
+  /*
 	printf("Wall time: %f seconds\n", (endTime2.tv_sec - startTime2.tv_sec) +
+         (endTime2.tv_nsec - startTime2.tv_nsec) / 1000000000.0);
+  */
+	printf("%f\n", (endTime2.tv_sec - startTime2.tv_sec) +
          (endTime2.tv_nsec - startTime2.tv_nsec) / 1000000000.0);
 
 }
@@ -273,13 +282,15 @@ void OpenMarket()
 
 int main()
 {
-  printf("\nZERO INTELLIGENCE TRADERS\n");
+  //printf("\nZERO INTELLIGENCE TRADERS\n");
 //  printf("%d",sizeof(Agent));
 
   InitializeMiscellaneous();
+  for (int i = 0; i < 10; i++) {
   InitializeAgents();
 
 	OpenMarket();
+ }
 
 	return(0);
 }
